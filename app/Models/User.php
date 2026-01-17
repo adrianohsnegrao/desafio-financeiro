@@ -20,7 +20,10 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'cpf',
         'password',
+        'type',
+        'balance',
     ];
 
     /**
@@ -42,7 +45,12 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'balance' => 'decimal:2',
         ];
+    }
+
+    public function isMerchant(): bool
+    {
+        return $this->type === 'merchant';
     }
 }
