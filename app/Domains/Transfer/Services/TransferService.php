@@ -3,6 +3,7 @@
 namespace App\Domains\Transfer\Services;
 
 use App\Domains\Transfer\Contracts\AuthorizeTransferServiceInterface;
+use App\Domains\Transfer\Contracts\NotifyTransferServiceInterface;
 use App\Domains\Transfer\Exceptions\InsufficientBalanceException;
 use App\Domains\Transfer\Exceptions\UnauthorizedTransferException;
 use App\Models\Domains\Transfer\Models\Transfer;
@@ -13,7 +14,8 @@ use Illuminate\Support\Facades\Log;
 class TransferService
 {
     public function __construct(
-        private AuthorizeTransferServiceInterface $authorizer
+        private AuthorizeTransferServiceInterface $authorizer,
+        private NotifyTransferServiceInterface $notifier
     ) {}
     public function execute(int $payerId, int $payeeId, float $amount): Transfer
     {
@@ -48,6 +50,15 @@ class TransferService
                 'amount' => $amount,
                 'status' => 'approved',
             ]);
+
+            try {
+                $this->notifier->notify($transfer);
+            } catch (\Throwable $e) {
+                Log::error('Notification failed', [
+                    'transfer_id' => $transfer->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
 
             Log::info('Transfer completed', ['transfer_id' => $transfer->id]);
 

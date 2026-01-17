@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Domains\Transfer\Contracts\AuthorizeTransferServiceInterface;
+use App\Domains\Transfer\Contracts\NotifyTransferServiceInterface;
 use App\Services\FakeAuthorizeTransferService;
+use App\Services\FakeNotifyTransferService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -16,6 +18,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             AuthorizeTransferServiceInterface::class,
             FakeAuthorizeTransferService::class
+        );
+
+        $this->app->bind(
+            NotifyTransferServiceInterface::class,
+            FakeNotifyTransferService::class
         );
     }
 
