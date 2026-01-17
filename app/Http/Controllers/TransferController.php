@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domains\Transfer\Exceptions\TransferException;
 use App\Domains\Transfer\Services\TransferService;
 use App\Http\Requests\TransferRequest;
 use Illuminate\Http\Request;
@@ -12,12 +13,19 @@ class TransferController extends Controller
         TransferRequest $request,
         TransferService $service
     ) {
-        $transfer = $service->execute(
-            $request->payer_id,
-            $request->payee_id,
-            $request->amount
-        );
+        try {
+            $transfer = $service->execute(
+                $request->payer_id,
+                $request->payee_id,
+                $request->amount
+            );
 
-        return response()->json($transfer, 201);
+            return response()->json($transfer, 201);
+
+        } catch (TransferException $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 422);
+        }
     }
 }
