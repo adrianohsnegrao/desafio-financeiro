@@ -5,22 +5,23 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class TransferTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_transfer_money()
     {
         $payer = User::factory()->create([
-            'type' => 'user',
+            'type' => 'common',
             'balance' => 100,
         ]);
 
         $payee = User::factory()->create([
-            'type' => 'user',
+            'type' => 'common',
             'balance' => 0,
         ]);
 
@@ -42,7 +43,7 @@ class TransferTest extends TestCase
         $this->assertEquals(50, $payee->fresh()->balance);
     }
 
-    /** @test */
+    #[Test]
     public function merchant_cannot_transfer_money()
     {
         $merchant = User::factory()->create([
@@ -51,7 +52,7 @@ class TransferTest extends TestCase
         ]);
 
         $user = User::factory()->create([
-            'type' => 'user',
+            'type' => 'common',
             'balance' => 0,
         ]);
 
@@ -64,16 +65,16 @@ class TransferTest extends TestCase
         $response->assertStatus(422);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_transfer_with_insufficient_balance()
     {
         $payer = User::factory()->create([
-            'type' => 'user',
+            'type' => 'common',
             'balance' => 10,
         ]);
 
         $payee = User::factory()->create([
-            'type' => 'user',
+            'type' => 'common',
             'balance' => 0,
         ]);
 
