@@ -2,6 +2,7 @@
 
 namespace App\Domains\Transfer\Services;
 
+use App\Domains\Transfer\Contracts\AuthorizeTransferServiceInterface;
 use App\Domains\Transfer\Exceptions\InsufficientBalanceException;
 use App\Domains\Transfer\Exceptions\UnauthorizedTransferException;
 use App\Models\Domains\Transfer\Models\Transfer;
@@ -11,9 +12,16 @@ use Illuminate\Support\Facades\Log;
 
 class TransferService
 {
+    public function __construct(
+        private AuthorizeTransferServiceInterface $authorizer
+    ) {}
     public function execute(int $payerId, int $payeeId, float $amount): Transfer
     {
         return DB::transaction(function () use ($payerId, $payeeId, $amount) {
+
+            if (! $this->authorizer->authorize()) {
+                throw new UnauthorizedTransferException('Transfer not authorized');
+            }
 
             Log::info('Transfer started', compact('payerId', 'payeeId', 'amount'));
 
@@ -22,6 +30,7 @@ class TransferService
 
             if ($payer->type === 'merchant') {
                 Log::warning('Unauthorized transfer attempt', ['payer' => $payerId]);
+
                 throw new UnauthorizedTransferException('Merchant cannot transfer funds');
             }
 
