@@ -5,8 +5,8 @@ namespace App\Domains\Transfer\Services;
 use App\Domains\Transfer\Contracts\AuthorizeTransferServiceInterface;
 use App\Domains\Transfer\Contracts\NotifyTransferServiceInterface;
 use App\Domains\Transfer\Exceptions\InsufficientBalanceException;
-use App\Domains\Transfer\Exceptions\TransferException;
 use App\Domains\Transfer\Exceptions\UnauthorizedTransferException;
+use App\Domains\Transfer\Repositories\TransferRepositoryInterface;
 use App\Models\Domains\Transfer\Models\Transfer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -16,11 +16,12 @@ class TransferService
 {
     public function __construct(
         private AuthorizeTransferServiceInterface $authorizer,
-        private NotifyTransferServiceInterface $notifier
+        private NotifyTransferServiceInterface $notifier,
+        private TransferRepositoryInterface $repository,
     ) {}
     public function execute(int $payerId, int $payeeId, float $amount, string $idempotencyKey): Transfer
     {
-        // 🔴 VALIDAÇÕES DE DOMÍNIO (FORA da transaction)
+
         if (! $this->authorizer->authorize()) {
             throw new UnauthorizedTransferException('Transfer not authorized');
         }
@@ -44,16 +45,14 @@ class TransferService
             $idempotencyKey
         ) {
 
-            $existing = Transfer::where('idempotency_key', $idempotencyKey)
-                ->lockForUpdate()
-                ->first();
+            $existing = $this->repository->findByIdempotencyKey($idempotencyKey);
 
             if ($existing) {
                 return $existing;
             }
 
-            $payer->lockForUpdate();
-            $payee->lockForUpdate();
+            $payer = User::where('id', $payer->id)->lockForUpdate()->first();
+            $payee = User::where('id', $payee->id)->lockForUpdate()->first();
 
             $payer->decrement('balance', $amount);
             $payee->increment('balance', $amount);
@@ -71,6 +70,7 @@ class TransferService
             } catch (\Throwable $e) {
                 Log::error('Notification failed', [
                     'transfer_id' => $transfer->id,
+                    'error' => $e->getMessage(),
                 ]);
             }
 
