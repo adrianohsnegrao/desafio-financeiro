@@ -2,27 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Domains\Transfer\Contracts\NotifyTransferServiceInterface;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\Fake\FailingNotifyTransferService;
 use Tests\TestCase;
 
-class TransferNotificationTest extends TestCase
+class TransferIdempotencyTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->app->bind(
-            NotifyTransferServiceInterface::class,
-            FailingNotifyTransferService::class
-        );
-    }
-
-    public function test_transfer_succeeds_even_if_notification_fails()
+    public function test_transfer_is_idempotent()
     {
         $payer = User::factory()->create([
             'type' => 'common',
@@ -34,14 +22,17 @@ class TransferNotificationTest extends TestCase
             'balance' => 0,
         ]);
 
-        $response = $this->postJson('/api/transfers', [
+        $payload = [
             'payer_id' => $payer->id,
             'payee_id' => $payee->id,
             'amount' => 50,
-            'idempotency_key' => fake()->uuid(),
-        ]);
+            'idempotency_key' => '11111111-1111-1111-1111-111111111111',
+        ];
 
-        $response->assertCreated();
+        $this->postJson('/api/transfers', $payload)->assertCreated();
+        $this->postJson('/api/transfers', $payload)->assertCreated();
+
+        $this->assertDatabaseCount('transfers', 1);
 
         $this->assertEquals(50, $payer->fresh()->balance);
         $this->assertEquals(50, $payee->fresh()->balance);

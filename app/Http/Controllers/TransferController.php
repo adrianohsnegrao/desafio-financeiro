@@ -17,7 +17,8 @@ class TransferController extends Controller
             $transfer = $service->execute(
                 $request->payer_id,
                 $request->payee_id,
-                $request->amount
+                $request->amount,
+                $request->idempotency_key
             );
 
             return response()->json($transfer, 201);

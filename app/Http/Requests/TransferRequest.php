@@ -25,6 +25,7 @@ class TransferRequest extends FormRequest
             'payer_id' => ['required', 'exists:users,id'],
             'payee_id' => ['required', 'exists:users,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
+            'idempotency_key' => ['required', 'uuid'],
         ];
     }
 }

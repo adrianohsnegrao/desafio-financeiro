@@ -17,9 +17,17 @@ class TransferService
         private AuthorizeTransferServiceInterface $authorizer,
         private NotifyTransferServiceInterface $notifier
     ) {}
-    public function execute(int $payerId, int $payeeId, float $amount): Transfer
+    public function execute(int $payerId, int $payeeId, float $amount, string $idempotencyKey): Transfer
     {
-        return DB::transaction(function () use ($payerId, $payeeId, $amount) {
+        return DB::transaction(function () use ($payerId, $payeeId, $amount, $idempotencyKey) {
+
+            $existing = Transfer::where('idempotency_key', $idempotencyKey)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
 
             if (! $this->authorizer->authorize()) {
                 throw new UnauthorizedTransferException('Transfer not authorized');
@@ -49,6 +57,7 @@ class TransferService
                 'payee_id' => $payeeId,
                 'amount' => $amount,
                 'status' => 'approved',
+                'idempotency_key' => $idempotencyKey,
             ]);
 
             try {

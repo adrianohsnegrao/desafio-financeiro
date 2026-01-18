@@ -11,5 +11,6 @@ class Transfer extends Model
         'payee_id',
         'amount',
         'status',
+        'idempotency_key',
     ];
 }

@@ -25,10 +25,13 @@ class TransferTest extends TestCase
             'balance' => 0,
         ]);
 
+        $idempotencyKey = fake()->uuid();
+
         $response = $this->postJson('/api/transfers', [
             'payer_id' => $payer->id,
             'payee_id' => $payee->id,
             'amount' => 50,
+            'idempotency_key' => $idempotencyKey,
         ]);
 
         $response->assertCreated();
@@ -37,6 +40,7 @@ class TransferTest extends TestCase
             'payer_id' => $payer->id,
             'payee_id' => $payee->id,
             'amount' => 50,
+            'idempotency_key' => $idempotencyKey,
         ]);
 
         $this->assertEquals(50, $payer->fresh()->balance);
@@ -60,6 +64,7 @@ class TransferTest extends TestCase
             'payer_id' => $merchant->id,
             'payee_id' => $user->id,
             'amount' => 10,
+            'idempotency_key' => fake()->uuid(),
         ]);
 
         $response->assertStatus(422);
@@ -82,6 +87,7 @@ class TransferTest extends TestCase
             'payer_id' => $payer->id,
             'payee_id' => $payee->id,
             'amount' => 50,
+            'idempotency_key' => fake()->uuid(),
         ]);
 
         $response->assertStatus(422);
