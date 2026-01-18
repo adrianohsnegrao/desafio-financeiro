@@ -38,6 +38,7 @@ class TransferAuthorizationTest extends TestCase
             'payer_id' => $payer->id,
             'payee_id' => $payee->id,
             'amount' => 50,
+            'idempotency_key' => 'test-key-123',
         ]);
 
         $response->assertStatus(422);

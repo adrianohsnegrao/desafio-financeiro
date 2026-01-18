@@ -28,4 +28,15 @@ class TransferRequest extends FormRequest
             'idempotency_key' => ['required', 'uuid'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'payer_id.required' => 'Payer is required',
+            'payee_id.required' => 'Payee is required',
+            'payee_id.different' => 'Payer and payee must be different',
+            'amount.min' => 'Amount must be greater than zero',
+            'idempotency_key.required' => 'Idempotency key is required',
+        ];
+    }
 }
