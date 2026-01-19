@@ -84,6 +84,7 @@ class TransferService
             } catch (\Throwable $e) {
                 Log::error('Notification failed', [
                     'transfer_id' => $transfer->id,
+                    'idempotency_key' => $idempotencyKey,
                     'error' => $e->getMessage(),
                 ]);
             }
