@@ -7,7 +7,7 @@ use App\Domains\Transfer\Services\TransferService;
 use App\Http\Requests\TransferCompatRequest;
 use App\Http\Requests\TransferRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class TransferController extends Controller
 {
@@ -39,15 +39,20 @@ class TransferController extends Controller
         try {
             $data = $request->validated();
 
+            $idempotencyKey = $request->header('Idempotency-Key');
+            if (!$idempotencyKey) {
+                $idempotencyKey = Str::uuid()->toString();
+            }
+
             $transfer = $this->service->execute(
                 payerId: (int) $data['payer'],
                 payeeId: (int) $data['payee'],
                 amount: (float) $data['value'],
-                idempotencyKey: $request->header('Idempotency-Key') ?? fake()->uuid(),
+                idempotencyKey: $idempotencyKey,
             );
 
             return response()->json($transfer, 201);
-        } catch (\App\Domains\Transfer\Exceptions\TransferException $e) {
+        } catch (TransferException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }
     }
