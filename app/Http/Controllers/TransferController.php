@@ -6,6 +6,7 @@ use App\Domains\Transfer\Exceptions\TransferException;
 use App\Domains\Transfer\Services\TransferService;
 use App\Http\Requests\TransferCompatRequest;
 use App\Http\Requests\TransferRequest;
+use App\Http\Resources\TransferResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 
@@ -25,7 +26,9 @@ class TransferController extends Controller
                 idempotencyKey: $request->idempotency_key
             );
 
-            return response()->json($transfer, 201);
+            return (new TransferResource($transfer))
+                ->response()
+                ->setStatusCode(201);
 
         } catch (TransferException $e) {
             return response()->json([
@@ -51,7 +54,9 @@ class TransferController extends Controller
                 idempotencyKey: $idempotencyKey,
             );
 
-            return response()->json($transfer, 201);
+            return (new TransferResource($transfer))
+                ->response()
+                ->setStatusCode(201);
         } catch (TransferException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }
