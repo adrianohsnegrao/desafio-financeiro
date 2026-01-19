@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Http\Requests;
-
-class TransferCompatRequest
+use Illuminate\Foundation\Http\FormRequest;
+class TransferCompatRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,7 +15,15 @@ class TransferCompatRequest
             'payer' => ['required', 'exists:users,id'],
             'payee' => ['required', 'exists:users,id', 'different:payer'],
             'value' => ['required', 'numeric', 'min:0.01'],
-            'idempotency_key' => ['sometimes', 'uuid'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'payer.required' => 'Payer is required',
+            'payee.required' => 'Payee is required',
+            'value.min' => 'Value must be greater than zero',
         ];
     }
 }
