@@ -12,6 +12,7 @@ use App\Models\Domains\Transfer\Models\Transfer;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\QueryException;
 
 class TransferService
 {
@@ -61,13 +62,22 @@ class TransferService
             $payer->decrement('balance', $amount);
             $payee->increment('balance', $amount);
 
-            $transfer = $this->repository->create([
-                'payer_id' => $payer->id,
-                'payee_id' => $payee->id,
-                'amount' => $amount,
-                'status' => 'approved',
-                'idempotency_key' => $idempotencyKey,
-            ]);
+            try {
+                $transfer = $this->repository->create([
+                    'payer_id' => $payer->id,
+                    'payee_id' => $payee->id,
+                    'amount' => $amount,
+                    'status' => 'approved',
+                    'idempotency_key' => $idempotencyKey,
+                ]);
+            } catch (QueryException $e) {
+                $existing = $this->repository->findByIdempotencyKey($idempotencyKey);
+                if ($existing) {
+                    return $existing;
+                }
+
+                throw $e;
+            }
 
             try {
                 $this->notifier->notify($transfer);
