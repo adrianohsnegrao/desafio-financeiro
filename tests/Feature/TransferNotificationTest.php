@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Domains\Transfer\Contracts\NotifyTransferServiceInterface;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\Fake\FailingNotifyTransferService;
 use Tests\TestCase;
 
@@ -15,6 +16,12 @@ class TransferNotificationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Http::fake([
+            '*/authorize' => Http::response([
+                'data' => ['authorization' => true],
+            ], 200),
+        ]);
 
         $this->app->bind(
             NotifyTransferServiceInterface::class,

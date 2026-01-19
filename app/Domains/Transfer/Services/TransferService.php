@@ -21,43 +21,42 @@ class TransferService
     ) {}
     public function execute(int $payerId, int $payeeId, float $amount, string $idempotencyKey): Transfer
     {
+        $existing = $this->repository->findByIdempotencyKey($idempotencyKey);
+        if ($existing) {
+            return $existing;
+        }
 
         if (! $this->authorizer->authorize()) {
             throw new UnauthorizedTransferException('Transfer not authorized');
         }
 
-        $payer = User::findOrFail($payerId);
-        $payee = User::findOrFail($payeeId);
-
-        if ($payer->isMerchant()) {
-            throw new UnauthorizedTransferException('Merchant cannot transfer funds');
-        }
-
-        if ($payer->balance < $amount) {
-            throw new InsufficientBalanceException('Insufficient balance');
-        }
-
-        // 🟢 MUTAÇÃO DE ESTADO (DENTRO da transaction)
         return DB::transaction(function () use (
-            $payer,
-            $payee,
+            $payerId,
+            $payeeId,
             $amount,
             $idempotencyKey
         ) {
 
-            $existing = $this->repository->findByIdempotencyKey($idempotencyKey);
+            $payer = User::where('id', $payerId)->lockForUpdate()->first();
+            $payee = User::where('id', $payeeId)->lockForUpdate()->first();
 
+            $existing = $this->repository->findByIdempotencyKey($idempotencyKey);
             if ($existing) {
                 return $existing;
             }
 
-            $payer = User::where('id', $payer->id)->lockForUpdate()->first();
-            $payee = User::where('id', $payee->id)->lockForUpdate()->first();
+            if ($payer->isMerchant()) {
+                throw new UnauthorizedTransferException('Merchant cannot transfer funds');
+            }
+
+            if ($payer->balance < $amount) {
+                throw new InsufficientBalanceException('Insufficient balance');
+            }
 
             $payer->decrement('balance', $amount);
             $payee->increment('balance', $amount);
 
-            $transfer = Transfer::create([
+            $transfer = $this->repository->create([
                 'payer_id' => $payer->id,
                 'payee_id' => $payee->id,
                 'amount' => $amount,
@@ -76,5 +75,6 @@ class TransferService
 
             return $transfer;
         });
+
     }
 }

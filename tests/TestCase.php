@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Http;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -12,5 +13,13 @@ abstract class TestCase extends BaseTestCase
 
         // Desliga exception handling padrão do Laravel
         // $this->withoutExceptionHandling();
+
+        Http::fake([
+            '*/authorize' => Http::response([
+                'data' => ['authorization' => true],
+            ], 200),
+
+            '*/notify' => Http::response([], 204),
+        ]);
     }
 }

@@ -4,16 +4,34 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use App\Domains\Transfer\Contracts\AuthorizeTransferServiceInterface;
+use Tests\Fake\DenyAuthorizeTransferService;
+
 
 class TransferTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Http::fake([
+            '*/authorize' => Http::response([
+                'data' => ['authorization' => true],
+            ], 200),
+
+            '*/notify' => Http::response([], 204),
+        ]);
+    }
+
     #[Test]
     public function user_can_transfer_money()
     {
+
         $payer = User::factory()->create([
             'type' => 'common',
             'balance' => 100,
@@ -90,5 +108,41 @@ class TransferTest extends TestCase
         ]);
 
         $response->assertStatus(422);
+    }
+
+    #[Test]
+    public function transfer_is_denied_when_authorizer_service_rejects()
+    {
+        $this->app->bind(
+            AuthorizeTransferServiceInterface::class,
+            DenyAuthorizeTransferService::class
+        );
+
+        $payer = User::factory()->create([
+            'type' => 'common',
+            'balance' => 100,
+        ]);
+
+        $payee = User::factory()->create([
+            'type' => 'common',
+            'balance' => 0,
+        ]);
+
+        $response = $this->postJson('/api/transfers', [
+            'payer_id' => $payer->id,
+            'payee_id' => $payee->id,
+            'amount' => 50,
+            'idempotency_key' => fake()->uuid(),
+        ]);
+
+        $response->assertStatus(422);
+
+        $this->assertEquals(100, $payer->fresh()->balance);
+        $this->assertEquals(0, $payee->fresh()->balance);
+
+        $this->assertDatabaseMissing('transfers', [
+            'payer_id' => $payer->id,
+            'payee_id' => $payee->id,
+        ]);
     }
 }
