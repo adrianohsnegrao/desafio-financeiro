@@ -5,6 +5,7 @@ namespace App\Domains\Transfer\Services;
 use App\Domains\Transfer\Contracts\AuthorizeTransferServiceInterface;
 use App\Domains\Transfer\Contracts\NotifyTransferServiceInterface;
 use App\Domains\Transfer\Exceptions\InsufficientBalanceException;
+use App\Domains\Transfer\Exceptions\TransferException;
 use App\Domains\Transfer\Exceptions\UnauthorizedTransferException;
 use App\Domains\Transfer\Repositories\TransferRepositoryInterface;
 use App\Models\Domains\Transfer\Models\Transfer;
@@ -43,6 +44,10 @@ class TransferService
             $existing = $this->repository->findByIdempotencyKey($idempotencyKey);
             if ($existing) {
                 return $existing;
+            }
+
+            if (!$payer || !$payee) {
+                throw new TransferException('Payer or payee not found');
             }
 
             if ($payer->isMerchant()) {
