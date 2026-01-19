@@ -91,4 +91,18 @@ class TransferCompatEndpointTest extends TestCase
         $this->assertNotNull($transfer);
         $this->assertNotEmpty($transfer->idempotency_key);
     }
+
+    public function test_compat_endpoint_rejects_transfer_to_self()
+    {
+        $payer = User::factory()->create([
+            'type' => 'common',
+            'balance' => 100,
+        ]);
+
+        $this->postJson('/api/transfer', [
+            'payer' => $payer->id,
+            'payee' => $payer->id,
+            'value' => 25,
+        ])->assertStatus(422);
+    }
 }

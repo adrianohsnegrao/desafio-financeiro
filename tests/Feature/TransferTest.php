@@ -111,6 +111,24 @@ class TransferTest extends TestCase
     }
 
     #[Test]
+    public function user_cannot_transfer_to_self()
+    {
+        $payer = User::factory()->create([
+            'type' => 'common',
+            'balance' => 100,
+        ]);
+
+        $response = $this->postJson('/api/transfers', [
+            'payer_id' => $payer->id,
+            'payee_id' => $payer->id,
+            'amount' => 50,
+            'idempotency_key' => fake()->uuid(),
+        ]);
+
+        $response->assertStatus(422);
+    }
+
+    #[Test]
     public function transfer_is_denied_when_authorizer_service_rejects()
     {
         $this->app->bind(
