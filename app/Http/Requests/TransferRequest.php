@@ -23,7 +23,7 @@ class TransferRequest extends FormRequest
     {
         return [
             'payer_id' => ['required', 'exists:users,id'],
-            'payee_id' => ['required', 'exists:users,id'],
+            'payee_id' => ['required', 'exists:users,id', 'different:payer_id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
             'idempotency_key' => ['required', 'uuid'],
         ];

@@ -10,7 +10,7 @@ class NotifyTransferService implements NotifyTransferServiceInterface
 {
     public function notify(Transfer $transfer): void
     {
-        Http::timeout(5)->post(
+        $response = Http::timeout(5)->post(
             config('services.transfer.notifier'),
             [
                 'transfer_id' => $transfer->id,
@@ -19,5 +19,9 @@ class NotifyTransferService implements NotifyTransferServiceInterface
                 'payee' => $transfer->payee_id,
             ]
         );
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('Notification failed');
+        }
     }
 }

@@ -4,7 +4,6 @@ namespace App\Infrastructure\Services;
 
 use App\Domains\Transfer\Contracts\AuthorizeTransferServiceInterface;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class AuthorizeTransferService implements AuthorizeTransferServiceInterface
 {
