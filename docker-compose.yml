@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      # Você pode rodar com sqlite em arquivo dentro do container:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/database/database.sqlite
+      # URLs externas do desafio:
+      TRANSFER_AUTHORIZER_URL: https://util.devi.tools/api/v2/authorize
+      TRANSFER_NOTIFIER_URL: https://util.devi.tools/api/v1/notify
+    volumes:
+      - .:/var/www
+    command: >
+      sh -c "touch /var/www/database/database.sqlite
+      && php artisan key:generate --force
+      && php artisan migrate --force
+      && php artisan serve --host=0.0.0.0 --port=8000"
