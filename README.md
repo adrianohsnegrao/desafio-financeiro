@@ -52,6 +52,16 @@ Response (422):
   "error": "Insufficient balance"
 }
 ```
+Possíveis erros (422):
+
+| Mensagem | Cenário |
+| --- | --- |
+| `Transfer not authorized` | Autorizador externo negou a operação |
+| `Merchant cannot transfer funds` | Lojista tentando transferir |
+| `Insufficient balance` | Saldo insuficiente |
+| `Payer or payee not found` | Usuário inexistente |
+| `The payee id field must be different from payer id.` | Payer igual ao payee (endpoint principal) |
+| `The payee field must be different from payer.` | Payer igual ao payee (endpoint compatível) |
 
 Endpoint principal do projeto
 POST /api/transfers
