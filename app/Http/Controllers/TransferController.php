@@ -36,15 +36,19 @@ class TransferController extends Controller
 
     public function storeCompat(TransferCompatRequest $request): JsonResponse
     {
-        $data = $request->validated();
+        try {
+            $data = $request->validated();
 
-        $transfer = $this->service->execute(
-            payerId: (int) $data['payer'],
-            payeeId: (int) $data['payee'],
-            amount: (float) $data['value'],
-            idempotencyKey: $request->header('Idempotency-Key') ?? fake()->uuid(),
-        );
+            $transfer = $this->service->execute(
+                payerId: (int) $data['payer'],
+                payeeId: (int) $data['payee'],
+                amount: (float) $data['value'],
+                idempotencyKey: $request->header('Idempotency-Key') ?? fake()->uuid(),
+            );
 
-        return response()->json($transfer, 201);
+            return response()->json($transfer, 201);
+        } catch (\App\Domains\Transfer\Exceptions\TransferException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
     }
 }
