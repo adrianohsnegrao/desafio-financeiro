@@ -1,0 +1,32 @@
+# VCS
+.git
+.gitignore
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies (serão instaladas no container)
+vendor
+node_modules
+
+# Laravel runtime
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/views
+bootstrap/cache
+
+# Tests / coverage (opcional)
+coverage
+.phpunit.result.cache
+
+# IDE / OS
+.idea
+.vscode
+*.swp
+.DS_Store
+
+# Docker
+docker-compose.override.yml
