@@ -1,0 +1,75 @@
+{
+    "_type": "export",
+    "__export_format": 4,
+    "__export_date": "2026-01-19T00:00:00.000Z",
+    "__export_source": "desafio-financeiro",
+    "resources": [
+        {
+            "_id": "wrk_desafio_financeiro",
+            "_type": "workspace",
+            "name": "Desafio Financeiro - Transfers",
+            "description": "Requests para testar transferências (endpoint compatível /transfer e endpoint principal /transfers)."
+        },
+        {
+            "_id": "env_base",
+            "_type": "environment",
+            "parentId": "wrk_desafio_financeiro",
+            "name": "Base Environment",
+            "data": {
+                "base_url": "http://localhost:8000"
+            }
+        },
+        {
+            "_id": "fld_transfers",
+            "_type": "request_group",
+            "parentId": "wrk_desafio_financeiro",
+            "name": "Transfers",
+            "description": ""
+        },
+        {
+            "_id": "req_transfer_contract",
+            "_type": "request",
+            "parentId": "fld_transfers",
+            "name": "Transfer (contrato do desafio) - POST /api/transfer",
+            "method": "POST",
+            "url": "{{ _.base_url }}/api/transfer",
+            "headers": [
+                { "name": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n  \"value\": 100.0,\n  \"payer\": 4,\n  \"payee\": 15\n}\n"
+            }
+        },
+        {
+            "_id": "req_transfer_main",
+            "_type": "request",
+            "parentId": "fld_transfers",
+            "name": "Transfer (seu endpoint) - POST /api/transfers",
+            "method": "POST",
+            "url": "{{ _.base_url }}/api/transfers",
+            "headers": [
+                { "name": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n  \"payer_id\": 4,\n  \"payee_id\": 15,\n  \"amount\": 100.0,\n  \"idempotency_key\": \"11111111-1111-1111-1111-111111111111\"\n}\n"
+            }
+        },
+        {
+            "_id": "req_idempotency_repeat",
+            "_type": "request",
+            "parentId": "fld_transfers",
+            "name": "Idempotência (repete mesma key) - POST /api/transfers",
+            "method": "POST",
+            "url": "{{ _.base_url }}/api/transfers",
+            "headers": [
+                { "name": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+                "mimeType": "application/json",
+                "text": "{\n  \"payer_id\": 4,\n  \"payee_id\": 15,\n  \"amount\": 50.0,\n  \"idempotency_key\": \"11111111-1111-1111-1111-111111111111\"\n}\n"
+            }
+        }
+    ]
+}
