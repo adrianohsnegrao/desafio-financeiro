@@ -1,59 +1,108 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Desafio Financeiro (Etapa Técnica)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API REST para transferências entre usuários (comuns e lojistas), com validações de saldo, autorização externa e notificação externa.
 
-## About Laravel
+## Regras de negócio implementadas
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Usuários comuns podem transferir para outros usuários comuns e para lojistas
+- Lojistas **não podem** realizar transferências (apenas recebem)
+- Validação de saldo antes da transferência
+- Consulta a serviço autorizador externo antes de efetivar a operação
+- Transferência é executada dentro de transação (atomicidade)
+- Notificação externa é disparada após a criação, mas falhas de notificação **não** quebram a transferência
+- Idempotência:
+    - Endpoint principal: via `idempotency_key` no body
+    - Endpoint compatível (enunciado): via header `Idempotency-Key`
+## Endpoints
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Endpoint compatível com o enunciado do desafio
+`POST /api/transfer`
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Headers (recomendado):
+- `Content-Type: application/json`
+- `Idempotency-Key: <uuid>` (opcional; se não enviar, o sistema gera uma chave)
 
-## Learning Laravel
+Body:
+```json
+{
+  "value": 100.0,
+  "payer": 4,
+  "payee": 15
+}
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Endpoint principal do projeto
+POST /api/transfers
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Body:
+```
+{
+  "payer_id": 4,
+  "payee_id": 15,
+  "amount": 100.0,
+  "idempotency_key": "11111111-1111-1111-1111-111111111111"
+}
+```
+### Serviços externos (mocks do desafio)
+- Authorizer (GET): https://util.devi.tools/api/v2/authorize
 
-## Laravel Sponsors
+- Notifier (POST): https://util.devi.tools/api/v1/notify
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Configuráveis via .env:
 
-### Premium Partners
+```
+TRANSFER_AUTHORIZER_URL
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+TRANSFER_NOTIFIER_URL
+```
 
-## Contributing
+## Rodando localmente (sem Docker)
+1. #### Instalar dependências:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```
+composer install
+```
 
-## Code of Conduct
+2. #### Configurar ambiente:
+```
+cp .env.example .env
+php artisan key:generate
+```
+3. #### Banco (sqlite recomendado para simplicidade):
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+    #### No .env:
+```
+DB_CONNECTION=sqlite
+DB_DATABASE=database/database.sqlite
+```
 
-## Security Vulnerabilities
+#### Criar arquivo e rodar migrations:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
+touch database/database.sqlite
+php artisan migrate
+```
 
-## License
+4. #### Subir API:
+```
+php artisan serve
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Testes
+#### Rodar testes:
+```
+php artisan test
+```
+
+## Rodando com Docker
+1. ### Build e subir:
+```
+docker compose up --build
+```
+2. ### Rodar testes no container:
+```
+docker compose exec app php artisan test
+```
+
+## Postman
+Importe a collection em ``postman_collection.json`` (inclusa/recomendada) e ajuste a variável ``base_url`` se necessário.
