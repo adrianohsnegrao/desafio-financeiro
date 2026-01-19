@@ -31,6 +31,28 @@ Body:
 }
 ```
 
+Response (201):
+```json
+{
+  "data": {
+    "id": 123,
+    "payer_id": 4,
+    "payee_id": 15,
+    "amount": "100.00",
+    "status": "approved",
+    "idempotency_key": "11111111-1111-1111-1111-111111111111",
+    "created_at": "2025-01-01T00:00:00.000000Z"
+  }
+}
+```
+
+Response (422):
+```json
+{
+  "error": "Insufficient balance"
+}
+```
+
 Endpoint principal do projeto
 POST /api/transfers
 
@@ -41,6 +63,27 @@ Body:
   "payee_id": 15,
   "amount": 100.0,
   "idempotency_key": "11111111-1111-1111-1111-111111111111"
+}
+```
+Response (201):
+```json
+{
+  "data": {
+    "id": 123,
+    "payer_id": 4,
+    "payee_id": 15,
+    "amount": "100.00",
+    "status": "approved",
+    "idempotency_key": "11111111-1111-1111-1111-111111111111",
+    "created_at": "2025-01-01T00:00:00.000000Z"
+  }
+}
+```
+
+Response (422):
+```json
+{
+  "error": "Insufficient balance"
 }
 ```
 ### Serviços externos (mocks do desafio)
