@@ -30,7 +30,11 @@ class TransferIdempotencyTest extends TestCase
         ];
 
         $this->postJson('/api/transfers', $payload)->assertCreated();
-        $this->postJson('/api/transfers', $payload)->assertCreated();
+        $this->postJson('/api/transfers', $payload)
+            ->assertStatus(422)
+            ->assertJson([
+                'error' => 'Idempotency key already used',
+            ]);
 
         $this->assertDatabaseCount('transfers', 1);
 

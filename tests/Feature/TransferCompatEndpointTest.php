@@ -57,7 +57,10 @@ class TransferCompatEndpointTest extends TestCase
                 'value' => 50,
             ],
             ['Idempotency-Key' => $idempotencyKey]
-        )->assertCreated();
+        )->assertStatus(422)
+            ->assertJson([
+                'error' => 'Idempotency key already used',
+            ]);
 
         $this->assertDatabaseCount('transfers', 1);
         $this->assertDatabaseHas('transfers', [
