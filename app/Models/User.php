@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Domains\Transfer\Models\Transfer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -52,5 +53,10 @@ class User extends Authenticatable
     public function isMerchant(): bool
     {
         return $this->type === 'merchant';
+    }
+
+    public function transfersMade()
+    {
+        return $this->hasMany(Transfer::class, 'payer_id');
     }
 }

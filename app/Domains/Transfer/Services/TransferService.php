@@ -4,6 +4,7 @@ namespace App\Domains\Transfer\Services;
 
 use App\Domains\Transfer\Contracts\AuthorizeTransferServiceInterface;
 use App\Domains\Transfer\Contracts\NotifyTransferServiceInterface;
+use App\Domains\Transfer\Exceptions\IdempotencyKeyUsedException;
 use App\Domains\Transfer\Exceptions\InsufficientBalanceException;
 use App\Domains\Transfer\Exceptions\TransferException;
 use App\Domains\Transfer\Exceptions\UnauthorizedTransferException;
@@ -25,7 +26,7 @@ class TransferService
     {
         $existing = $this->repository->findByIdempotencyKey($idempotencyKey);
         if ($existing) {
-            return $existing;
+            throw new IdempotencyKeyUsedException('Idempotency key already used');
         }
 
         if (! $this->authorizer->authorize()) {
@@ -44,7 +45,7 @@ class TransferService
 
             $existing = $this->repository->findByIdempotencyKey($idempotencyKey);
             if ($existing) {
-                return $existing;
+                throw new IdempotencyKeyUsedException('Idempotency key already used');
             }
 
             if (!$payer || !$payee) {
@@ -73,7 +74,7 @@ class TransferService
             } catch (QueryException $e) {
                 $existing = $this->repository->findByIdempotencyKey($idempotencyKey);
                 if ($existing) {
-                    return $existing;
+                    throw new IdempotencyKeyUsedException('Idempotency key already used');
                 }
 
                 throw $e;
