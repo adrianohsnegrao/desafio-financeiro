@@ -15,12 +15,12 @@ WORKDIR /var/www
 # Copia o projeto
 COPY . .
 
+RUN mkdir -p /var/www/storage /var/www/bootstrap/cache \
+    && chown -R www-data:www-data /var/www \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
 # Instala deps
 RUN composer install --no-interaction --prefer-dist
-
-# Permissões
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 8000
 
